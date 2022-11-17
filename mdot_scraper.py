@@ -113,6 +113,10 @@ def get_contract_data(driver, project_number):
     contract_number.send_keys(Keys.ENTER)
 
     data = []
+
+    WebDriverWait(driver, 30).until(
+        EC.presence_of_element_located((By.CLASS_NAME, "page-navigation"))
+    )
     num_pages = get_number_of_pages(driver)
     for i in range(num_pages):
         WebDriverWait(driver, 30).until(
@@ -151,6 +155,7 @@ if __name__ == "__main__":
         sys.exit(0)
 
     for project_number in project_numbers:
+        print(project_number)
         data = get_contract_data(driver, project_number)
         fpath = f"{output_directory}/{project_number}.csv"
         data.to_csv(fpath, index=False)
