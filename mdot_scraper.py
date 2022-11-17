@@ -20,6 +20,7 @@ try:
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    from selenium.common.exceptions import NoSuchElementException
 except ImportError:
     install_library("selenium")
     from selenium import webdriver
@@ -28,6 +29,7 @@ except ImportError:
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
+    from selenium.common.exceptions import NoSuchElementException
 
 
 try:
@@ -86,15 +88,22 @@ def set_output_directory():
 
 
 def get_number_of_pages(driver):
-    navigation = driver.find_element(By.CLASS_NAME, "page-navigation")
-    links = navigation.find_elements(By.TAG_NAME, "a")
-    return len(links) - 4
+    # not all contract numbers have multiple pages
+    try:
+        navigation = driver.find_element(By.CLASS_NAME, "page-navigation")
+        links = navigation.find_elements(By.TAG_NAME, "a")
+        return len(links) - 4
+    except NoSuchElementException:
+        return 1
 
 
 def get_next_button(driver):
-    navigation = driver.find_element(By.CLASS_NAME, "page-navigation")
-    links = navigation.find_elements(By.TAG_NAME, "a")
-    return links[-2]
+    try:
+        navigation = driver.find_element(By.CLASS_NAME, "page-navigation")
+        links = navigation.find_elements(By.TAG_NAME, "a")
+        return links[-2]
+    except NoSuchElementException:
+        return None
 
 
 def get_contract_data(driver, project_number):
@@ -114,19 +123,23 @@ def get_contract_data(driver, project_number):
 
     data = []
 
+    # Wait for the table to show up before trying to get the number of pages
     WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "page-navigation"))
+        EC.presence_of_element_located((By.ID, "subContractTable"))
     )
+
     num_pages = get_number_of_pages(driver)
-    for i in range(num_pages):
+    for _ in range(num_pages):
         WebDriverWait(driver, 30).until(
             EC.presence_of_element_located((By.ID, "subcontrtactsId"))
         )
 
         table = driver.find_element(By.ID, "subContractTable")
         data.append(pd.read_html(table.get_attribute("outerHTML"))[0])
+
         next_button = get_next_button(driver)
-        next_button.click()
+        if next_button is not None:
+            next_button.click()
 
     df = pd.concat(data, ignore_index=True, sort=False)
     return df
@@ -155,7 +168,6 @@ if __name__ == "__main__":
         sys.exit(0)
 
     for project_number in project_numbers:
-        print(project_number)
         data = get_contract_data(driver, project_number)
         fpath = f"{output_directory}/{project_number}.csv"
         data.to_csv(fpath, index=False)
