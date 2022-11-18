@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 import sys
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, OpenKey, QueryValueEx
@@ -20,7 +21,7 @@ try:
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import NoSuchElementException
+    from selenium.common.exceptions import NoSuchElementException, TimeoutException
 except ImportError:
     install_library("selenium")
     from selenium import webdriver
@@ -29,7 +30,7 @@ except ImportError:
     from selenium.webdriver.support.ui import Select
     from selenium.webdriver.support.wait import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import NoSuchElementException
+    from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 
 try:
@@ -123,10 +124,14 @@ def get_contract_data(driver, project_number):
 
     data = []
 
-    # Wait for the table to show up before trying to get the number of pages
-    WebDriverWait(driver, 30).until(
-        EC.presence_of_element_located((By.ID, "subContractTable"))
-    )
+    # Not every project has subcontracts associated with it.
+    # If this project does not, then bail out.
+    try:
+        WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, "subContractTable"))
+        )
+    except TimeoutException:
+        return None
 
     num_pages = get_number_of_pages(driver)
     for _ in range(num_pages):
@@ -142,6 +147,7 @@ def get_contract_data(driver, project_number):
             next_button.click()
 
     df = pd.concat(data, ignore_index=True, sort=False)
+    df["project_number"] = project_number
     return df
 
 
@@ -167,8 +173,19 @@ if __name__ == "__main__":
         print("This script can only run in Chrome. Please change your default browser.")
         sys.exit(0)
 
+    failed_projects = []
     for project_number in project_numbers:
         data = get_contract_data(driver, project_number)
-        fpath = f"{output_directory}/{project_number}.csv"
-        data.to_csv(fpath, index=False)
+        if data is not None:
+            fpath = f"{output_directory}/{datetime.today().strftime('%Y%m%d')}.csv"
+            data.to_csv(fpath, index=False, mode="a")
+        else:
+            failed_projects.append(project_number)
         time.sleep(3)
+
+    if failed_projects:
+        print(
+            "[-] The following projects did not appear to have subcontracts associated with them:"
+        )
+        for project in failed_projects:
+            print(project)
