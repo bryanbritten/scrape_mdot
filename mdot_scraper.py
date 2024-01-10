@@ -4,41 +4,26 @@ import sys
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
-
-def install_library(lib_name) -> None:
+def install_libraries() -> None:
     import subprocess
 
-    subprocess.check_call([sys.executable, "-m", "pip", "install", lib_name])
-    print(
-        f"[+] {lib_name}, a required library, wasn't installed so it has been installed for you."
-    )
+    print("[+] Missing at least one required library. Installing necessary packages (pandas, selenium, and lxml) now...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+    print("[+] Required libraries have been installed.")
 
-
-try:
-    from selenium import webdriver
-    from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import Select
-    from selenium.webdriver.support.wait import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import NoSuchElementException, TimeoutException
-except ImportError:
-    install_library("selenium")
-    from selenium import webdriver
-    from selenium.webdriver.common.keys import Keys
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.support.ui import Select
-    from selenium.webdriver.support.wait import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-    from selenium.common.exceptions import NoSuchElementException, TimeoutException
-
-
-try:
-    import pandas as pd
-except ModuleNotFoundError:
-    install_library("pandas")
-    install_library("lxml")
-    import pandas as pd
+def import_non_standard_libraries() -> None:
+    try:
+        from selenium import webdriver
+        from selenium.webdriver.common.keys import Keys
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import Select
+        from selenium.webdriver.support.wait import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.common.exceptions import NoSuchElementException, TimeoutException
+        import pandas as pd
+    except ImportError:
+        install_libraries()
+        import_non_standard_libraries()
 
 
 # stolen from https://stackoverflow.com/questions/19037216/how-to-get-a-name-of-default-browser-using-python
