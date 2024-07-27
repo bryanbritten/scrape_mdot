@@ -9,6 +9,7 @@ print("[+] Required libraries have been installed.")
 
 import time
 from datetime import datetime
+from io import StringIO
 from pathlib import Path
 
 import pandas as pd
@@ -133,7 +134,9 @@ def parse_subcontract_data(driver):
                 By.XPATH, 
                 '//div[@id="subcontrtactsId"]/div[@class="panel-body"]/div[@class="row"][1]/div[2]'
         ).text
-        subcontract_data = pd.read_html(table.get_attribute("outerHTML"))[0]
+        table_text = table.get_attribute('outerHTML')
+        table_strIO = StringIO(str(table_text))
+        subcontract_data = pd.read_html(table_strIO)[0]
         subcontract_data['Prime Contractor'] = contractor_name
         data.append(subcontract_data)
 
@@ -169,6 +172,13 @@ def extract_project_data(driver, project_number):
     return df
 
 
+def clean_data(data):
+    data['Orig. Contract Amt'] = data['Orig. Contract Amt'].str.replace('$', '').str.replace(',', '').astype(float)
+    data['SubCont  Value'] = data['SubCont  Value'].str.replace('$', '').str.replace(',', '').astype(float)
+    data.columns = [' '.join(column.split()) for column in data.columns]
+    return data
+
+
 if __name__ == "__main__":
     project_numbers = import_project_numbers()
     output_directory = set_output_directory()
@@ -181,6 +191,7 @@ if __name__ == "__main__":
         data = extract_project_data(driver, project_number)
         if not data.empty:
             fpath = f"{output_directory}/{datetime.today().strftime('%Y%m%d')}.csv"
+            data = clean_data(data)
             data.to_csv(fpath, index=False, mode="a")
         else:
             failed_projects.append(project_number)
