@@ -123,7 +123,13 @@ def parse_subcontract_data(driver):
         )
 
         table = driver.find_element(By.ID, "subContractTable")
-        data.append(pd.read_html(table.get_attribute("outerHTML"))[0])
+        contractor_name = driver.find_element(
+                By.XPATH, 
+                '//*[@id="subcontrtactsId"]/div[@class="panel-body"]/div[@class="row"][1]/div[2]'
+        ).text
+        subcontract_data = pd.read_html(table.get_attribute("outerHTML"))[0]
+        subcontract_data['Prime Contractor'] = contractor_name
+        data.append(subcontract_data)
 
         next_button = get_next_button(driver)
         if next_button is not None:
@@ -137,7 +143,7 @@ def extract_project_data(driver, project_number):
     driver = get_home_page(driver)
 
     WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.ID, "selectedReportType"))
+            EC.presence_of_element_located((By.ID, 'selectedReportType'))
     )
 
     select_from_dropdown(driver, 'selectedReportType', 'Subcontracts')
@@ -146,7 +152,7 @@ def extract_project_data(driver, project_number):
     data = parse_subcontract_data(driver)
 
     df = pd.concat(data, ignore_index=True, sort=False)
-    df["project_number"] = project_number
+    df['Project Number'] = project_number
     return df
 
 
