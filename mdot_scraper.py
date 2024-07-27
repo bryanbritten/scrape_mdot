@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 print("[+] Ensuring you have all of the necessary packages installed. You can review the requirements.txt file to see which packages are being installed.")
-subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt", "--quiet"])
 print("[+] Required libraries have been installed.")
 
 
@@ -57,6 +57,14 @@ def set_output_directory():
             break
 
     return str(fpath).rstrip("/")
+
+
+def get_chrome_driver():
+    service = ChromeService(ChromeDriverManager().install())
+    options = webdriver.ChromeOptions()
+    options.add_argument('--headless')
+    driver = webdriver.Chrome(service=service)
+    return driver
 
 
 def get_number_of_pages(driver):
@@ -127,8 +135,7 @@ if __name__ == "__main__":
     output_directory = set_output_directory()
 
     # only support Chrome for the moment
-    default_browser = "ChromeHTML"
-    driver = get_driver(default_browser)
+    driver = get_chrome_driver()
 
     failed_projects = []
     for project_number in project_numbers:
