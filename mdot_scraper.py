@@ -30,17 +30,6 @@ def import_non_standard_libraries(attempts=1) -> None:
         import_non_standard_libraries(attempts=attempts + 1)
 
 
-# stolen from https://stackoverflow.com/questions/19037216/how-to-get-a-name-of-default-browser-using-python
-def get_default_browser() -> str:
-    with OpenKey(
-        HKEY_CURRENT_USER,
-        r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice",
-    ) as regkey:
-        browser = QueryValueEx(regkey, "ProgId")[0]
-
-    return browser
-
-
 def import_project_numbers() -> list[str]:
     fpath = Path(input("Please provide the filepath to your list of project numbers: "))
     while True:
@@ -144,7 +133,6 @@ if __name__ == "__main__":
     project_numbers = import_project_numbers()
     output_directory = set_output_directory()
 
-    # default_browser = get_default_browser()
     # only support Chrome for the moment
     default_browser = "ChromeHTML"
     if default_browser == "ChromeHTML":
