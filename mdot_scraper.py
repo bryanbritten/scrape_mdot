@@ -1,41 +1,26 @@
+# This first block of code just ensures that the user has all of the necessary packages installed
+import subprocess
+import sys
+
+print("[+] Ensuring you have all of the necessary packages installed. You can review the requirements.txt file to see which packages are being installed.")
+subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+print("[+] Required libraries have been installed.")
+
+
 import time
 from datetime import datetime
-import sys
 from pathlib import Path
 
-IMPORT_ATTEMPT_THRESHOLD = 2
-
-
-def install_libraries():
-    import subprocess
-
-    print("[+] Missing at least one required library. Installing necessary packages (pandas, selenium, and lxml) now...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
-    print("[+] Required libraries have been installed.")
-
-
-def import_non_standard_libraries(attempts=1):
-    if attempts >= IMPORT_ATTEMPT_THRESHOLD:
-        raise RuntimeError("Failed to install the libraries necessary to run this code. Please read the README.md document for instructions on filing an issue.")
-    try:
-        from selenium import webdriver
-        from selenium.webdriver.common.keys import Keys
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.chrome.service import Service as ChromeService
-        from selenium.webdriver.support.ui import Select
-        from selenium.webdriver.support.wait import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.common.exceptions import NoSuchElementException, TimeoutException
-        from webdriver_manager.chrome import ChromeDriverManager
-        import pandas as pd
-    except ImportError:
-        install_libraries()
-        import_non_standard_libraries(attempts=attempts + 1)
-
-
-def get_driver(browser):
-        service = ChromeService(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service)
+import pandas as pd
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def import_project_numbers():
