@@ -21,10 +21,12 @@ def import_non_standard_libraries(attempts=1):
         from selenium import webdriver
         from selenium.webdriver.common.keys import Keys
         from selenium.webdriver.common.by import By
+        from selenium.webdriver.chrome.service import Service as ChromeService
         from selenium.webdriver.support.ui import Select
         from selenium.webdriver.support.wait import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
         from selenium.common.exceptions import NoSuchElementException, TimeoutException
+        from webdriver_manager.chrome import ChromeDriverManager
         import pandas as pd
     except ImportError:
         install_libraries()
@@ -32,14 +34,6 @@ def import_non_standard_libraries(attempts=1):
 
 
 def get_driver(browser):
-        from selenium.webdriver.chrome.service import Service as ChromeService
-
-        try:
-            from webdriver_manager.chrome import ChromeDriverManager
-        except ImportError:
-            install_library("webdriver-manager")
-            from webdriver_manager.chrome import ChromeDriverManager
-
         service = ChromeService(ChromeDriverManager().install())
         driver = webdriver.Chrome(service=service)
 
