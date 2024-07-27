@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from winreg import HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
+IMPORT_ATTEMPT_THRESHOLD = 2
+
 def install_libraries() -> None:
     import subprocess
 
@@ -11,7 +13,9 @@ def install_libraries() -> None:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
     print("[+] Required libraries have been installed.")
 
-def import_non_standard_libraries() -> None:
+def import_non_standard_libraries(attempts=1) -> None:
+    if attempts >= IMPORT_ATTEMPT_THRESHOLD:
+        raise RuntimeError("Failed to install the libraries necessary to run this code. Please read the README.md document for instructions on filing an issue.")
     try:
         from selenium import webdriver
         from selenium.webdriver.common.keys import Keys
@@ -23,7 +27,7 @@ def import_non_standard_libraries() -> None:
         import pandas as pd
     except ImportError:
         install_libraries()
-        import_non_standard_libraries()
+        import_non_standard_libraries(attempts=attempts + 1)
 
 
 # stolen from https://stackoverflow.com/questions/19037216/how-to-get-a-name-of-default-browser-using-python
