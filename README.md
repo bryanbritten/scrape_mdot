@@ -27,4 +27,4 @@ Both questions expect you to type file paths into the terminal. The filepath for
 
 # Handling Errors
 
-If you encounter any errors while using this script, it's almost certainly because the CSS/HTML for the site has changed. Feel free to [open an issue](https://github.com/potentpwnables/scrape_mdot/issues) with a screenshot of your Powershell window with as much output as you can show. 
+If you encounter any errors while using this script, it's almost certainly because the CSS/HTML for the site has changed. Feel free to [open an issue](https://github.com/bryanbritten/scrape_mdot/issues) with a screenshot of your Powershell window with as much output as you can show. 
