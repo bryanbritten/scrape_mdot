@@ -2,18 +2,19 @@ import time
 from datetime import datetime
 import sys
 from pathlib import Path
-from winreg import HKEY_CURRENT_USER, OpenKey, QueryValueEx
 
 IMPORT_ATTEMPT_THRESHOLD = 2
 
-def install_libraries() -> None:
+
+def install_libraries():
     import subprocess
 
     print("[+] Missing at least one required library. Installing necessary packages (pandas, selenium, and lxml) now...")
     subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
     print("[+] Required libraries have been installed.")
 
-def import_non_standard_libraries(attempts=1) -> None:
+
+def import_non_standard_libraries(attempts=1):
     if attempts >= IMPORT_ATTEMPT_THRESHOLD:
         raise RuntimeError("Failed to install the libraries necessary to run this code. Please read the README.md document for instructions on filing an issue.")
     try:
@@ -30,7 +31,20 @@ def import_non_standard_libraries(attempts=1) -> None:
         import_non_standard_libraries(attempts=attempts + 1)
 
 
-def import_project_numbers() -> list[str]:
+def get_driver(browser):
+        from selenium.webdriver.chrome.service import Service as ChromeService
+
+        try:
+            from webdriver_manager.chrome import ChromeDriverManager
+        except ImportError:
+            install_library("webdriver-manager")
+            from webdriver_manager.chrome import ChromeDriverManager
+
+        service = ChromeService(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service)
+
+
+def import_project_numbers():
     fpath = Path(input("Please provide the filepath to your list of project numbers: "))
     while True:
         if not fpath.exists():
@@ -135,20 +149,7 @@ if __name__ == "__main__":
 
     # only support Chrome for the moment
     default_browser = "ChromeHTML"
-    if default_browser == "ChromeHTML":
-        from selenium.webdriver.chrome.service import Service as ChromeService
-
-        try:
-            from webdriver_manager.chrome import ChromeDriverManager
-        except ImportError:
-            install_library("webdriver-manager")
-            from webdriver_manager.chrome import ChromeDriverManager
-
-        service = ChromeService(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service=service)
-    else:
-        print("This script can only run in Chrome. Please change your default browser.")
-        sys.exit(0)
+    driver = get_driver(default_browser)
 
     failed_projects = []
     for project_number in project_numbers:
