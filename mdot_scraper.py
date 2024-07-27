@@ -86,21 +86,25 @@ def get_next_button(driver):
         return None
 
 
-def get_contract_data(driver, project_number):
-    BASE_URL = "https://mdotjboss.state.mi.us/CCI/"
+def get_home_page(driver):
+    BASE_URL = 'https://mdotjboss.state.mi.us/CCI/'
     driver.get(BASE_URL)
+    return driver
 
-    WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.ID, "selectedReportType"))
-    )
-    report_type = Select(driver.find_element(By.ID, "selectedReportType"))
-    report_type.select_by_visible_text("Subcontracts")
 
-    contract_number = driver.find_element(By.ID, "contractProjectNum")
-    contract_number.clear()
-    contract_number.send_keys(project_number)
-    contract_number.send_keys(Keys.ENTER)
+def select_from_dropdown(driver, dropdown_id, value):
+    dropdown = Select(driver.find_element(By.ID, 'selectedReportType'))
+    dropdown.select_by_visible_text(value)
 
+
+def enter_project_number_in_form(driver, project_number):
+    contract_number_input = driver.find_element(By.ID, 'contractProjectNum')
+    contract_number_input.clear()
+    contract_number_input.send_keys(project_number)
+    contract_number_input.send_keys(Keys.ENTER)
+
+
+def parse_subcontract_data(driver):
     data = []
 
     # Not every project has subcontracts associated with it.
@@ -110,7 +114,7 @@ def get_contract_data(driver, project_number):
             EC.presence_of_element_located((By.ID, "subContractTable"))
         )
     except TimeoutException:
-        return None
+        return data
 
     num_pages = get_number_of_pages(driver)
     for _ in range(num_pages):
@@ -124,6 +128,22 @@ def get_contract_data(driver, project_number):
         next_button = get_next_button(driver)
         if next_button is not None:
             next_button.click()
+    
+    return data
+
+
+
+def extract_project_data(driver, project_number):
+    driver = get_home_page(driver)
+
+    WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, "selectedReportType"))
+    )
+
+    select_from_dropdown(driver, 'selectedReportType', 'Subcontracts')
+    enter_project_number_in_form(driver, project_number)
+
+    data = parse_subcontract_data(driver)
 
     df = pd.concat(data, ignore_index=True, sort=False)
     df["project_number"] = project_number
@@ -139,8 +159,8 @@ if __name__ == "__main__":
 
     failed_projects = []
     for project_number in project_numbers:
-        data = get_contract_data(driver, project_number)
-        if data is not None:
+        data = extract_project_data(driver, project_number)
+        if not data.empty:
             fpath = f"{output_directory}/{datetime.today().strftime('%Y%m%d')}.csv"
             data.to_csv(fpath, index=False, mode="a")
         else:
