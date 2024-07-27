@@ -89,6 +89,12 @@ def get_next_button(driver):
 def get_home_page(driver):
     BASE_URL = 'https://mdotjboss.state.mi.us/CCI/'
     driver.get(BASE_URL)
+
+    # make sure that the inputs load so we know the page loaded successfully
+    WebDriverWait(driver, 30).until(
+            EC.presence_of_element_located((By.ID, 'selectedReportType'))
+    )
+    
     return driver
 
 
@@ -125,7 +131,7 @@ def parse_subcontract_data(driver):
         table = driver.find_element(By.ID, "subContractTable")
         contractor_name = driver.find_element(
                 By.XPATH, 
-                '//*[@id="subcontrtactsId"]/div[@class="panel-body"]/div[@class="row"][1]/div[2]'
+                '//div[@id="subcontrtactsId"]/div[@class="panel-body"]/div[@class="row"][1]/div[2]'
         ).text
         subcontract_data = pd.read_html(table.get_attribute("outerHTML"))[0]
         subcontract_data['Prime Contractor'] = contractor_name
@@ -138,20 +144,27 @@ def parse_subcontract_data(driver):
     return data
 
 
+def get_orig_contract_amount(driver):
+    driver = get_home_page(driver)
+    select_from_dropdown(driver, 'selectedReportType', 'General Contract Level Information')
+    enter_project_number_in_form(driver, project_number)
+
+    orig_contract_amount = driver.find_element(By.XPATH, '//div[@id="federalDivId"]/div[10]/div[2]').text
+    return orig_contract_amount
+
 
 def extract_project_data(driver, project_number):
     driver = get_home_page(driver)
-
-    WebDriverWait(driver, 30).until(
-            EC.presence_of_element_located((By.ID, 'selectedReportType'))
-    )
 
     select_from_dropdown(driver, 'selectedReportType', 'Subcontracts')
     enter_project_number_in_form(driver, project_number)
 
     data = parse_subcontract_data(driver)
-
     df = pd.concat(data, ignore_index=True, sort=False)
+
+    orig_contract_amount = get_orig_contract_amount(driver)
+    df['Orig. Contract Amt'] = orig_contract_amount
+
     df['Project Number'] = project_number
     return df
 
